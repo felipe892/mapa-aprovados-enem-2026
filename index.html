@@ -395,6 +395,18 @@
     .reveal { opacity: 1; transform: none; }
   }
 </style>
+<!-- Meta Pixel (Mapa dos Aprovados). A Compra é enviada pela Cakto (servidor), não por aqui. -->
+<script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1103283755419145');
+  fbq('track', 'PageView');
+  fbq('track', 'ViewContent', { content_name: 'Mapa dos Aprovados ENEM 2026', currency: 'BRL', value: 12.90 });
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1103283755419145&ev=PageView&noscript=1" /></noscript>
 </head>
 <body>
 
@@ -719,7 +731,25 @@
   };
 
   const modal = document.getElementById("upsell");
-  const go = (plan) => { window.location.href = CHECKOUT[plan]; };
+  const PRECO = { basico: 12.90, completo: 29.90 };
+
+  // Guarda de onde a pessoa veio (UTMs do anúncio, fbclid) e repassa pro checkout da Cakto
+  const RASTREIO = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "sck", "src", "fbclid"];
+  const origem = (() => {
+    const atual = new URLSearchParams(location.search);
+    let salvo = {};
+    try { salvo = JSON.parse(sessionStorage.getItem("origem") || "{}"); } catch (e) {}
+    RASTREIO.forEach((k) => { if (atual.get(k)) salvo[k] = atual.get(k); });
+    try { sessionStorage.setItem("origem", JSON.stringify(salvo)); } catch (e) {}
+    return salvo;
+  })();
+
+  const go = (plan) => {
+    const url = new URL(CHECKOUT[plan]);
+    Object.entries(origem).forEach(([k, v]) => url.searchParams.set(k, v));
+    if (window.fbq) fbq("track", "AddToCart", { content_name: "Mapa " + (plan === "basico" ? "Básico" : "Completo"), currency: "BRL", value: PRECO[plan] });
+    setTimeout(() => { window.location.href = url.toString(); }, 150);
+  };
 
   document.querySelectorAll("[data-buy]").forEach((btn) => {
     btn.addEventListener("click", () => {
